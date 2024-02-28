@@ -281,4 +281,12 @@ public class SmartWeatherHubHandler extends BaseBridgeHandler implements SmartWe
         this.updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.BRIDGE_OFFLINE);
         messageTimeout = null;
     }
+
+    @Override
+    public void dispose() {
+        if (udpListener != null) {
+            udpListener.unregisterListener(this);
+        }
+        super.dispose();
+    }
 }
