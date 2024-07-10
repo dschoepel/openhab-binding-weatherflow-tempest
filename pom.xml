@@ -9,12 +9,12 @@
     <artifactId>org.openhab.addons.reactor.bundles</artifactId>
     <relativePath>../openhab-addons/bundles</relativePath>
 
-    <version>4.0.1</version>
+    <version>4.2.0</version>
   </parent>
 
   <artifactId>org.openhab.binding.weatherflowsmartweather</artifactId>
   <name>openHAB Add-ons :: Bundles :: Weatherflow Smart Weather Binding</name>
-
+  <version>4.2.0</version>
   <build>
     <plugins>
       <plugin>
