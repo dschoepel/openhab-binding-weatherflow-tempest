@@ -83,6 +83,16 @@ public class SmartWeatherAirHandler extends BaseThingHandler implements SmartWea
         // }
     }
 
+    public ScheduledFuture<?> scheduleTimeout() {
+
+        return scheduler.schedule(new Runnable() {
+            @Override
+            public void run() {
+                goOffline();
+            }
+        }, 3, TimeUnit.MINUTES);
+    }
+
     @Override
     public void initialize() {
         // TODO: Initialize the thing. If done set status to ONLINE to indicate proper working.
@@ -95,6 +105,8 @@ public class SmartWeatherAirHandler extends BaseThingHandler implements SmartWea
         // as expected. E.g.
         // updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.CONFIGURATION_ERROR,
         // "Can not access device as username and/or password are invalid");
+
+        messageTimeout = scheduleTimeout();
     }
 
     // wonder if perhaps the refresh rate on this data may be too high by default... do we really need to
@@ -111,12 +123,7 @@ public class SmartWeatherAirHandler extends BaseThingHandler implements SmartWea
             if (this.getThing().getStatus() == ThingStatus.OFFLINE) {
                 goOnline();
             }
-            messageTimeout = scheduler.schedule(new Runnable() {
-                @Override
-                public void run() {
-                    goOffline();
-                }
-            }, 3, TimeUnit.MINUTES);
+            messageTimeout = scheduleTimeout();
 
             // TODO update station status fields
         } else if (data instanceof ObservationAirMessage) {

@@ -88,6 +88,16 @@ public class SmartWeatherTempestHandler extends BaseThingHandler implements Smar
         // }
     }
 
+    public ScheduledFuture<?> scheduleTimeout() {
+
+        return scheduler.schedule(new Runnable() {
+            @Override
+            public void run() {
+                goOffline();
+            }
+        }, 3, TimeUnit.MINUTES);
+    }
+
     @Override
     public void initialize() {
         // TODO: Initialize the thing. If done set status to ONLINE to indicate proper working.
@@ -100,6 +110,8 @@ public class SmartWeatherTempestHandler extends BaseThingHandler implements Smar
         // as expected. E.g.
         // updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.CONFIGURATION_ERROR,
         // "Can not access device as username and/or password are invalid");
+
+        messageTimeout = scheduleTimeout();
     }
 
     @Override
@@ -216,7 +228,7 @@ public class SmartWeatherTempestHandler extends BaseThingHandler implements Smar
                             type = new QuantityType<ElectricPotential>(val, Units.VOLT);
                             break;
                         case CHANNEL_REPORT_INTERVAL:
-                            type = new QuantityType<Time>(val, Units.SECOND);
+                            type = new QuantityType<Time>(val * 60, Units.SECOND);
                             break;
                         case CHANNEL_SOLAR_RADIATION:
                             type = new QuantityType<Intensity>(val, Units.IRRADIANCE);
