@@ -1,36 +1,59 @@
-<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 
   <modelVersion>4.0.0</modelVersion>
 
   <parent>
     <groupId>org.openhab.addons.bundles</groupId>
     <artifactId>org.openhab.addons.reactor.bundles</artifactId>
-    <relativePath>../openhab-addons/bundles</relativePath>
-
-    <version>4.2.0</version>
+    <version>5.2.0</version>
+    <relativePath/>
   </parent>
 
   <artifactId>org.openhab.binding.weatherflowsmartweather</artifactId>
+  <version>5.2.0</version>
+
   <name>openHAB Add-ons :: Bundles :: Weatherflow Smart Weather Binding</name>
-  <version>4.2.0</version>
+
+  <properties>
+    <!-- Standalone build: the parent normally finds these files in the openhab-addons checkout -->
+    <basedirRoot>${project.basedir}</basedirRoot>
+    <!-- markdownlint needs openhab-addons' .github/markdownlint.yaml; off until the README is reworked -->
+    <markdownlint.skip>true</markdownlint.skip>
+  </properties>
+
+  <!-- The openHAB parent POM and core artifacts are not on Maven Central -->
+  <repositories>
+    <repository>
+      <snapshots>
+        <enabled>false</enabled>
+      </snapshots>
+      <id>openhab-release</id>
+      <url>https://openhab.jfrog.io/artifactory/libs-release</url>
+    </repository>
+  </repositories>
+
+  <pluginRepositories>
+    <pluginRepository>
+      <snapshots>
+        <enabled>false</enabled>
+      </snapshots>
+      <id>openhab-release</id>
+      <url>https://openhab.jfrog.io/artifactory/libs-release</url>
+    </pluginRepository>
+  </pluginRepositories>
+
   <build>
     <plugins>
+      <!-- Looks up the openhab-addons reactor folder, which a standalone build doesn't have; basedirRoot is set above instead -->
       <plugin>
-        <groupId>org.codehaus.mojo</groupId>
-        <artifactId>build-helper-maven-plugin</artifactId>
+        <groupId>org.commonjava.maven.plugins</groupId>
+        <artifactId>directory-maven-plugin</artifactId>
         <executions>
           <execution>
-            <goals>
-              <goal>add-source</goal>
-            </goals>
-            <phase>generate-sources</phase>
-            <configuration>
-              <sources>
-                <source>src/3rdparty/java</source>
-              </sources>
-            </configuration>
+            <id>directories</id>
+            <phase>none</phase>
           </execution>
         </executions>
       </plugin>
