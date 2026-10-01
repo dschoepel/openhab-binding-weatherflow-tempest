@@ -1,2 +1,7 @@
 /target/
 /.idea
+
+# Eclipse
+.classpath
+.project
+.settings/
