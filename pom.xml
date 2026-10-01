@@ -16,19 +16,22 @@
 
   <name>openHAB Add-ons :: Bundles :: Weatherflow Smart Weather Binding</name>
 
+  <properties>
+    <!-- Standalone build: the parent normally finds these files in the openhab-addons checkout -->
+    <basedirRoot>${project.basedir}</basedirRoot>
+    <!-- markdownlint needs openhab-addons' .github/markdownlint.yaml; off until the README is reworked -->
+    <markdownlint.skip>true</markdownlint.skip>
+  </properties>
+
   <build>
     <plugins>
-      <!-- The parent's markdownlint step expects openhab-addons' .github/markdownlint.yaml; disabled until the README is reworked -->
+      <!-- Looks up the openhab-addons reactor folder, which a standalone build doesn't have; basedirRoot is set above instead -->
       <plugin>
-        <groupId>com.github.eirslett</groupId>
-        <artifactId>frontend-maven-plugin</artifactId>
+        <groupId>org.commonjava.maven.plugins</groupId>
+        <artifactId>directory-maven-plugin</artifactId>
         <executions>
           <execution>
-            <id>install-node-and-npm</id>
-            <phase>none</phase>
-          </execution>
-          <execution>
-            <id>markdownlint</id>
+            <id>directories</id>
             <phase>none</phase>
           </execution>
         </executions>
