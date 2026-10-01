@@ -16,11 +16,25 @@
 
   <name>openHAB Add-ons :: Bundles :: Weatherflow Smart Weather Binding</name>
 
-  <properties>
-    <!-- The parent's markdownlint step expects openhab-addons' .github/markdownlint.yaml; skip it until the README is reworked -->
-    <skip.installnodenpm>true</skip.installnodenpm>
-    <skip.npm>true</skip.npm>
-  </properties>
+  <build>
+    <plugins>
+      <!-- The parent's markdownlint step expects openhab-addons' .github/markdownlint.yaml; disabled until the README is reworked -->
+      <plugin>
+        <groupId>com.github.eirslett</groupId>
+        <artifactId>frontend-maven-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>install-node-and-npm</id>
+            <phase>none</phase>
+          </execution>
+          <execution>
+            <id>markdownlint</id>
+            <phase>none</phase>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
+  </build>
 
   <!-- The openHAB parent POM and core artifacts are not on Maven Central -->
   <repositories>
