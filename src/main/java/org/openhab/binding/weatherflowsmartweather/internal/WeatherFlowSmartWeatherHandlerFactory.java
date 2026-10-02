@@ -167,7 +167,7 @@ public class WeatherFlowSmartWeatherHandlerFactory extends BaseThingHandlerFacto
         logger.debug("Registering Device Discovery Service " + hubHandler);
         SmartWeatherStationDiscoveryService discoveryService = new SmartWeatherStationDiscoveryService(udpListener,
                 hubHandler);
-        discoveryService.activate();
+        discoveryService.start();
         this.discoveryServiceRegs.put(hubHandler.getThing().getUID(), bundleContext
                 .registerService(DiscoveryService.class.getName(), discoveryService, new Hashtable<String, Object>()));
     }
@@ -180,7 +180,7 @@ public class WeatherFlowSmartWeatherHandlerFactory extends BaseThingHandlerFacto
                 // remove discovery service, if bridge handler is removed
                 SmartWeatherStationDiscoveryService service = (SmartWeatherStationDiscoveryService) bundleContext
                         .getService(serviceReg.getReference());
-                service.deactivate();
+                service.stop();
                 serviceReg.unregister();
                 discoveryServiceRegs.remove(thingHandler.getThing().getUID());
             }

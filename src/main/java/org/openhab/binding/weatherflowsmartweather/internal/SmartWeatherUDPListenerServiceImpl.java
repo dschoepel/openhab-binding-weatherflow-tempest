@@ -1,8 +1,8 @@
 package org.openhab.binding.weatherflowsmartweather.internal;
 
 import java.net.InetAddress;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Set;
+import java.util.concurrent.CopyOnWriteArraySet;
 
 import org.openhab.binding.weatherflowsmartweather.SmartWeatherEventListener;
 import org.openhab.binding.weatherflowsmartweather.model.SmartWeatherDeserializer;
@@ -21,7 +21,8 @@ import com.google.gson.GsonBuilder;
 public class SmartWeatherUDPListenerServiceImpl implements SmartWeatherUDPListenerService {
 
     Logger logger = LoggerFactory.getLogger(SmartWeatherUDPListenerServiceImpl.class);
-    List<SmartWeatherEventListener> listeners = new ArrayList<>();
+    // a set, so registering twice (background discovery plus a manual scan) has no effect
+    Set<SmartWeatherEventListener> listeners = new CopyOnWriteArraySet<>();
     UdpServer us;
     final int weatherFlowPort = 50222;
 
@@ -55,7 +56,6 @@ public class SmartWeatherUDPListenerServiceImpl implements SmartWeatherUDPListen
     Gson gson = new GsonBuilder().registerTypeAdapter(SmartWeatherMessage.class, new SmartWeatherDeserializer())
             .create();
 
-    // TODO fix concurrent modification race condition
     private void processMessage(InetAddress source, String data) {
         SmartWeatherMessage message = null;
         // logger.warn("Parsing message data for " + listeners.size() + " listeners.");

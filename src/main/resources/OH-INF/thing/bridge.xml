@@ -19,6 +19,7 @@
 			<property name="vendor">WeatherFlow</property>
 			<property name="serial_number"></property>
 		</properties>
+		<representation-property>serial_number</representation-property>
 	</bridge-type>
 
 	<channel-type id="rssi">
