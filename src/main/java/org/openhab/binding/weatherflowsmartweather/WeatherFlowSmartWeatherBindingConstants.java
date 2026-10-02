@@ -12,7 +12,6 @@
  */
 package org.openhab.binding.weatherflowsmartweather;
 
-import java.util.HashSet;
 import java.util.Set;
 
 import org.openhab.core.thing.ThingTypeUID;
@@ -30,10 +29,7 @@ public class WeatherFlowSmartWeatherBindingConstants {
 
     // List of all Thing Type UIDs
     public static final ThingTypeUID THING_TYPE_SMART_WEATHER_HUB = new ThingTypeUID(BINDING_ID, "hub");
-    public static final ThingTypeUID THING_TYPE_SMART_WEATHER_AIR = new ThingTypeUID(BINDING_ID, "air");
-    public static final ThingTypeUID THING_TYPE_SMART_WEATHER_SKY = new ThingTypeUID(BINDING_ID, "sky");
     public static final ThingTypeUID THING_TYPE_SMART_WEATHER_TEMPEST = new ThingTypeUID(BINDING_ID, "tempest");
-    public static final ThingTypeUID THING_TYPE_SMART_WEATHER_AIRQUALITY = new ThingTypeUID(BINDING_ID, "quality");
     public static final ThingTypeUID THING_TYPE_SMART_WEATHER_BETTER_FORECAST = new ThingTypeUID(BINDING_ID,
             "better-forecast");
 
@@ -43,7 +39,7 @@ public class WeatherFlowSmartWeatherBindingConstants {
     public static final String CHANNEL_UPTIME = "uptime";
     public static final String CHANNEL_LAST_REPORT = "lastReport";
 
-    // List of all Air Channel ids
+    // Tempest channel ids
     public static final String CHANNEL_EPOCH = "epoch";
     public static final String CHANNEL_TEMPERATURE = "temperature";
     public static final String CHANNEL_PRESSURE = "pressure";
@@ -52,7 +48,6 @@ public class WeatherFlowSmartWeatherBindingConstants {
     public static final String CHANNEL_STRIKE_DISTANCE = "strike_distance";
     public static final String CHANNEL_BATTERY_LEVEL = "battery_level";
 
-    // List of all Sky Channel ids
     public static final String CHANNEL_ILLUMINANCE = "illuminance";
     public static final String CHANNEL_UV = "uv";
     public static final String CHANNEL_RAIN_ACCUMULATED = "rain_accumulated";
@@ -70,17 +65,6 @@ public class WeatherFlowSmartWeatherBindingConstants {
     public static final String CHANNEL_STATION_NAME = "station_name";
     public static final String CHANNEL_FORECAST_RAW = "forecast_raw";
     public static final String CHANNEL_FORECAST_ENRICHED = "forecast_enriched";
-
-    // Air quality channel ids
-    public static final String CHANNEL_PM10 = "pm10";
-    public static final String CHANNEL_PM25 = "pm25";
-    public static final String CHANNEL_PM100 = "pm100";
-    public static final String CHANNEL_PARTICLE_3UM = "particles_03um";
-    public static final String CHANNEL_PARTICLE_5UM = "particles_05um";
-    public static final String CHANNEL_PARTICLE_10UM = "particles_10um";
-    public static final String CHANNEL_PARTICLE_25UM = "particles_25um";
-    public static final String CHANNEL_PARTICLE_50UM = "particles_50um";
-    public static final String CHANNEL_PARTICLE_100UM = "particles_100um";
 
     public static final String SKIP = "SKIP";
 
@@ -101,17 +85,9 @@ public class WeatherFlowSmartWeatherBindingConstants {
 
     public static final String EMPTY_INVALID = "empty or invalid";
 
-    public static final Set<ThingTypeUID> SUPPORTED_THING_TYPES;
-    static {
-        Set<ThingTypeUID> thingTypes = new HashSet<>();
-        thingTypes.add(THING_TYPE_SMART_WEATHER_HUB);
-        thingTypes.add(THING_TYPE_SMART_WEATHER_AIR);
-        thingTypes.add(THING_TYPE_SMART_WEATHER_SKY);
-        thingTypes.add(THING_TYPE_SMART_WEATHER_TEMPEST);
-        thingTypes.add(THING_TYPE_SMART_WEATHER_BETTER_FORECAST);
-        thingTypes.add(THING_TYPE_SMART_WEATHER_AIRQUALITY);
-        SUPPORTED_THING_TYPES = Set.copyOf(thingTypes);
-    }
+    public static final Set<ThingTypeUID> SUPPORTED_THING_TYPES = Set.of(THING_TYPE_SMART_WEATHER_HUB,
+            THING_TYPE_SMART_WEATHER_TEMPEST, THING_TYPE_SMART_WEATHER_BETTER_FORECAST);
+
     public static final String PROPERTY_SERIAL_NUMBER = "serial_number";
 
     public static final String MIME_TYPE_JSON = "application/json";

@@ -30,7 +30,7 @@ public class RapidWindTrigger extends BaseTriggerModuleHandler implements EventF
      * This constant is used to get the value of the 'skyThingUid' property from {@link Trigger}'s
      * {@link Configuration}.
      */
-    private static final String SKY_UID = "sensorThingUid";
+    private static final String SENSOR_UID = "sensorThingUid";
 
     /**
      * This constant defines the output name of this {@link Trigger} handler.
@@ -74,7 +74,7 @@ public class RapidWindTrigger extends BaseTriggerModuleHandler implements EventF
         if (configuration == null) {
             throw new IllegalArgumentException("Configuration can't be null.");
         }
-        sensorThingUid = (String) configuration.get(SKY_UID);
+        sensorThingUid = (String) configuration.get(SENSOR_UID);
         if (sensorThingUid == null) {
             throw new IllegalArgumentException("'skyThingUid' can not be null.");
         }

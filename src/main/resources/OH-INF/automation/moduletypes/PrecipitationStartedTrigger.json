@@ -10,7 +10,7 @@
                "type":"TEXT",
                "context":"thing",
                "label":"Sensor Thing",
-               "description":"The WeatherFlow Sky or Tempest device to use as the source for this trigger.",
+               "description":"The WeatherFlow Tempest to use as the source for this trigger.",
                "required":true
             }
          ],

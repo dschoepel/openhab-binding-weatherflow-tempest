@@ -4,11 +4,11 @@
         {
             "type": "string",
             "id": "sensorUid",
-            "label": "Sky or Tempest Thing UID",
-            "description": "Smart Weather Sky or Tempest Thing UID to use as data source for this widget, Will look like: weatherflowsmartweather:sky:HB-000012345:SK-00012345"
+            "label": "Tempest Thing UID",
+            "description": "Smart Weather Tempest Thing UID to use as data source for this widget, Will look like: weatherflowsmartweather:tempest:HB-000012345:ST-00012345"
         }
     ],
     "name": "Rapid Wind Thing",
     "author": "William Welliver",
-    "description": "Simple widget that displays Rapid Wind data for a SmartWeather Sky or Tempest"
+    "description": "Simple widget that displays Rapid Wind data for a SmartWeather Tempest"
 }

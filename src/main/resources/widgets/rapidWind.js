@@ -1,6 +1,6 @@
 // An angularjs module for widgets that display WeatherFlow SmartWeather "rapid-wind" events
 //
-// TODO: Support multiple Sky devices within the service and multiple listeners.
+// TODO: Support multiple Tempest devices within the service and multiple listeners.
 //       Do we need to unregister listeners?
 var myModule = angular.module("rapidWind", []);
 

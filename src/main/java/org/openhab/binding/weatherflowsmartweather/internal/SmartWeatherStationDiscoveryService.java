@@ -33,7 +33,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Discovers the sensors (Tempest, Air, Sky, Air Quality) attached to one hub, from the status messages they
+ * Discovers the Tempest sensors attached to one hub, from the status messages they
  * broadcast over UDP.
  *
  * Each sensor is reported to the inbox once per background session or manual scan, and sensors that already
@@ -55,7 +55,7 @@ public class SmartWeatherStationDiscoveryService extends AbstractDiscoveryServic
 
     public SmartWeatherStationDiscoveryService(SmartWeatherUDPListenerService udpListener,
             SmartWeatherHubHandler hubHandler) {
-        super(WeatherFlowSmartWeatherBindingConstants.SUPPORTED_THING_TYPES, SCAN_TIMEOUT_SECONDS, true);
+        super(Set.of(WeatherFlowSmartWeatherBindingConstants.THING_TYPE_SMART_WEATHER_TEMPEST), SCAN_TIMEOUT_SECONDS, true);
         this.udpListener = udpListener;
         this.hubHandler = hubHandler;
     }
@@ -125,23 +125,12 @@ public class SmartWeatherStationDiscoveryService extends AbstractDiscoveryServic
             return;
         }
 
-        String label;
-        ThingTypeUID thingType;
-        if (serial.startsWith("AQ")) {
-            label = "SmartWeather Air Quality";
-            thingType = WeatherFlowSmartWeatherBindingConstants.THING_TYPE_SMART_WEATHER_AIRQUALITY;
-        } else if (serial.startsWith("AR")) {
-            label = "SmartWeather Air";
-            thingType = WeatherFlowSmartWeatherBindingConstants.THING_TYPE_SMART_WEATHER_AIR;
-        } else if (serial.startsWith("SK")) {
-            label = "SmartWeather Sky";
-            thingType = WeatherFlowSmartWeatherBindingConstants.THING_TYPE_SMART_WEATHER_SKY;
-        } else if (serial.startsWith("ST")) {
-            label = "SmartWeather Tempest";
-            thingType = WeatherFlowSmartWeatherBindingConstants.THING_TYPE_SMART_WEATHER_TEMPEST;
-        } else {
+        // only the Tempest is supported
+        if (!serial.startsWith("ST")) {
             return;
         }
+        String label = "SmartWeather Tempest";
+        ThingTypeUID thingType = WeatherFlowSmartWeatherBindingConstants.THING_TYPE_SMART_WEATHER_TEMPEST;
 
         reportedSerials.add(serial);
 
