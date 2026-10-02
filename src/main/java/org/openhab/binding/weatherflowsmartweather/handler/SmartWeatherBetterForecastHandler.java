@@ -14,21 +14,20 @@ package org.openhab.binding.weatherflowsmartweather.handler;
 
 import static org.openhab.binding.weatherflowsmartweather.WeatherFlowSmartWeatherBindingConstants.*;
 
-import java.net.MalformedURLException;
-import java.net.URL;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import org.eclipse.jetty.client.HttpClient;
 import org.eclipse.jetty.client.api.ContentResponse;
 import org.eclipse.jetty.client.api.Request;
-import org.eclipse.jetty.util.ssl.SslContextFactory;
-import org.openhab.binding.weatherflowsmartweather.model.*;
-import org.openhab.core.i18n.CommunicationException;
+import org.openhab.binding.weatherflowsmartweather.model.BetterForecast;
+import org.openhab.binding.weatherflowsmartweather.model.BetterForecastThingConfig;
 import org.openhab.core.library.types.DateTimeType;
 import org.openhab.core.library.types.StringType;
 import org.openhab.core.thing.*;
@@ -57,9 +56,12 @@ public class SmartWeatherBetterForecastHandler extends BaseThingHandler {
     protected Duration updateInterval = Duration.ofMinutes(15);
     protected ScheduledFuture<?> forecastUpdateTask = null;
 
-    public SmartWeatherBetterForecastHandler(Thing thing) {
+    /**
+     * @param httpClient openHAB's shared HTTP client, which is already started and checks certificates
+     */
+    public SmartWeatherBetterForecastHandler(Thing thing, HttpClient httpClient) {
         super(thing);
-        httpClient = new HttpClient(new SslContextFactory.Client(true));
+        this.httpClient = httpClient;
     }
 
     @Override
@@ -97,116 +99,107 @@ public class SmartWeatherBetterForecastHandler extends BaseThingHandler {
 
     @Override
     public void initialize() {
-        // TODO: Initialize the thing. If done set status to ONLINE to indicate proper working.
-        // Long running initialization should be done asynchronously in background.
-
         BetterForecastThingConfig config = getConfigAs(BetterForecastThingConfig.class);
 
         if (config.getStationId() == 0) {
-            logger.warn("station_id is empty");
-            updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.CONFIGURATION_ERROR, "Invalid Station ID");
+            updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.CONFIGURATION_ERROR,
+                    "Station ID is missing. It is the number in your station's address on tempestwx.com.");
             return;
         }
 
-        if (config.getToken() == null || config.getToken().isEmpty()) {
-            logger.warn("token is empty");
-            updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.CONFIGURATION_ERROR, "Invalid Authorization Token");
+        String token = config.getToken();
+        if (token == null || token.isBlank()) {
+            updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.CONFIGURATION_ERROR,
+                    "Authorization token is missing. Create one at tempestwx.com > Settings > Data Authorizations.");
             return;
         }
 
-        goOnline();
-
-        // Note: When initialization can NOT be done set the status with more details for further
-        // analysis. See also class ThingStatusDetail for all available status details.
-        // Add a description to give user information to understand why thing does not work
-        // as expected. E.g.
-        // updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.CONFIGURATION_ERROR,
-        // "Can not access device as username and/or password are invalid");
-    }
-
-    private void goOnline() {
-        this.updateStatus(ThingStatus.ONLINE);
-        logger.info("Scheduling Forecast Fetch with interval of {}", updateInterval);
-        forecastUpdateTask = scheduler.scheduleAtFixedRate(this::fetchForecast, 5000, updateInterval.toMillis(),
-                TimeUnit.MILLISECONDS);
-    }
-
-    protected void goOffline() {
-        if (forecastUpdateTask != null)
-            forecastUpdateTask.cancel(true);
-        forecastUpdateTask = null;
-        this.updateStatus(ThingStatus.OFFLINE);
+        // the status becomes ONLINE or OFFLINE after the first fetch
+        updateStatus(ThingStatus.UNKNOWN);
+        logger.debug("Fetching the forecast every {}", updateInterval);
+        forecastUpdateTask = scheduler.scheduleWithFixedDelay(this::fetchForecast, 5, updateInterval.toSeconds(),
+                TimeUnit.SECONDS);
     }
 
     protected void fetchForecast() {
-
         BetterForecastThingConfig config = getConfigAs(BetterForecastThingConfig.class);
-        try {
-            URL baseURL = new URL(FORECAST_URL);
-            if (!httpClient.isStarted()) {
-                httpClient.start();
-            }
 
-            Request request = httpClient.newRequest(baseURL.toURI()).timeout(10, TimeUnit.SECONDS);
+        Request request = httpClient.newRequest(FORECAST_URL).timeout(10, TimeUnit.SECONDS);
+        request.param(CONFIG_STATION_ID, String.valueOf(config.getStationId()));
+        request.param(CONFIG_TOKEN, config.getToken());
 
-            request.param(CONFIG_STATION_ID, String.valueOf(config.getStationId()));
-            request.param(CONFIG_TOKEN, config.getToken());
-
-            // TODO make advanced option to select each individually
-            if (!SYSTEM_OF_MEASUREMENT_METRIC.equals(config.getSystem_of_measurement())) {
-                request.param("units_temp", "f");
-                request.param("units_wind", "mph");
-                request.param("units_pressure", "inhg");
-                request.param("units_precip", "in");
-                request.param("units_distance", "mi");
-            }
-
-            logger.trace("fetchForecast: requesting {}", request.getURI());
-            ContentResponse response = request.send();
-            logger.trace("Response code {}", response.getStatus());
-
-            if (response.getStatus() == 401) {
-                // authorization failure
-                goOffline();
-                updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.CONFIGURATION_ERROR,
-                        "Authorization Failed, invalid token or station_id?");
-            }
-
-            if (response.getStatus() != 200) {
-                throw new CommunicationException(
-                        "Error communicating with WeatherFlow web service. Error Code: " + response.getStatus());
-            }
-            String content = response.getContentAsString();
-            logger.trace("fetchForecast: response {}", content);
-            updateState(CHANNEL_FORECAST_RAW, new StringType(content));
-
-            BetterForecast forecast = gson.fromJson(content, BetterForecast.class);
-
-            forecast.enrich(config.getKeep_hourly(), config.getKeep_daily());
-
-            String enrichedForecast = gson.toJson(forecast);
-            logger.trace("fetchForecast: enrichedForecast {}", enrichedForecast);
-
-            updateState(CHANNEL_FORECAST_ENRICHED, new StringType(enrichedForecast));
-
-            updateState(CHANNEL_STATION_NAME, new StringType(forecast.getLocation_name()));
-
-            Instant i = Instant.ofEpochSecond(forecast.getCurrentConditions().getTime());
-            ZonedDateTime z = ZonedDateTime.ofInstant(i, ZoneOffset.UTC);
-            updateState(CHANNEL_EPOCH, new DateTimeType(z));
-        } catch (MalformedURLException e) {
-            logger.warn("Bad url: ", e);
-        } catch (Exception e) {
-            logger.warn("Error occurred while fetching forecast", e);
+        // TODO make advanced option to select each individually
+        if (!SYSTEM_OF_MEASUREMENT_METRIC.equals(config.getSystem_of_measurement())) {
+            request.param("units_temp", "f");
+            request.param("units_wind", "mph");
+            request.param("units_pressure", "inhg");
+            request.param("units_precip", "in");
+            request.param("units_distance", "mi");
         }
+
+        ContentResponse response;
+        try {
+            response = request.send();
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            return;
+        } catch (TimeoutException | ExecutionException e) {
+            updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.COMMUNICATION_ERROR,
+                    "Unable to reach WeatherFlow: " + e.getMessage());
+            return;
+        }
+
+        int status = response.getStatus();
+        logger.trace("Forecast response code {}", status);
+        if (status == 401 || status == 403) {
+            updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.CONFIGURATION_ERROR,
+                    "WeatherFlow rejected the token (HTTP " + status + "). Check the token and station ID.");
+            return;
+        }
+        if (status == 404) {
+            updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.CONFIGURATION_ERROR,
+                    "WeatherFlow does not know station " + config.getStationId() + " (HTTP 404).");
+            return;
+        }
+        if (status != 200) {
+            updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.COMMUNICATION_ERROR,
+                    "WeatherFlow returned HTTP " + status);
+            return;
+        }
+
+        String content = response.getContentAsString();
+        logger.trace("Forecast response {}", content);
+
+        BetterForecast forecast;
+        try {
+            forecast = gson.fromJson(content, BetterForecast.class);
+            if (forecast == null || forecast.getCurrentConditions() == null) {
+                throw new IllegalStateException("response has no current conditions");
+            }
+            forecast.enrich(config.getKeep_hourly(), config.getKeep_daily());
+        } catch (RuntimeException e) {
+            logger.debug("Unable to read forecast response {}", content, e);
+            updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.COMMUNICATION_ERROR,
+                    "Unexpected forecast response from WeatherFlow: " + e.getMessage());
+            return;
+        }
+
+        updateStatus(ThingStatus.ONLINE);
+        updateState(CHANNEL_FORECAST_RAW, new StringType(content));
+        updateState(CHANNEL_FORECAST_ENRICHED, new StringType(gson.toJson(forecast)));
+        updateState(CHANNEL_STATION_NAME, new StringType(forecast.getLocation_name()));
+
+        Instant time = Instant.ofEpochSecond(forecast.getCurrentConditions().getTime());
+        updateState(CHANNEL_EPOCH, new DateTimeType(ZonedDateTime.ofInstant(time, ZoneOffset.UTC)));
     }
 
     @Override
     public void dispose() {
-        if (forecastUpdateTask != null)
-            forecastUpdateTask.cancel(true);
+        ScheduledFuture<?> task = forecastUpdateTask;
+        if (task != null) {
+            task.cancel(true);
+        }
         forecastUpdateTask = null;
-
         super.dispose();
     }
 }
