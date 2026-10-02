@@ -29,7 +29,6 @@ import javax.measure.quantity.*;
 import org.openhab.binding.weatherflowsmartweather.SmartWeatherEventListener;
 import org.openhab.binding.weatherflowsmartweather.event.*;
 import org.openhab.binding.weatherflowsmartweather.model.*;
-import org.openhab.core.events.Event;
 import org.openhab.core.events.EventPublisher;
 import org.openhab.core.library.dimension.Intensity;
 import org.openhab.core.library.types.*;
@@ -38,10 +37,13 @@ import org.openhab.core.library.unit.Units;
 import org.openhab.core.thing.ChannelUID;
 import org.openhab.core.thing.Thing;
 import org.openhab.core.thing.ThingStatus;
+import org.openhab.core.thing.ThingStatusDetail;
+import org.openhab.core.thing.ThingStatusInfo;
 import org.openhab.core.thing.ThingUID;
 import org.openhab.core.thing.binding.BaseThingHandler;
 import org.openhab.core.types.Command;
 import org.openhab.core.types.State;
+import org.openhab.core.types.UnDefType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -57,6 +59,8 @@ import com.google.gson.Gson;
 public class SmartWeatherTempestHandler extends BaseThingHandler implements SmartWeatherEventListener {
 
     private final Logger logger = LoggerFactory.getLogger(SmartWeatherTempestHandler.class);
+
+    private static final int MESSAGE_TIMEOUT_MINUTES = 3;
 
     private ScheduledFuture<?> messageTimeout;
     private Gson gson = new Gson();
@@ -78,112 +82,99 @@ public class SmartWeatherTempestHandler extends BaseThingHandler implements Smar
 
     @Override
     public void handleCommand(ChannelUID channelUID, Command command) {
-        // if (channelUID.getId().equals(CHANNEL_1)) {
-        // TODO: handle command
-
-        // Note: if communication with thing fails for some reason,
-        // indicate that by setting the status with detail information
-        // updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.COMMUNICATION_ERROR,
-        // "Could not control device at IP address x.x.x.x");
-        // }
-    }
-
-    public ScheduledFuture<?> scheduleTimeout() {
-
-        return scheduler.schedule(new Runnable() {
-            @Override
-            public void run() {
-                goOffline();
-            }
-        }, 3, TimeUnit.MINUTES);
+        // all channels are read-only
     }
 
     @Override
     public void initialize() {
-        // TODO: Initialize the thing. If done set status to ONLINE to indicate proper working.
-        // Long running initialization should be done asynchronously in background.
-        updateStatus(ThingStatus.ONLINE);
+        // the Tempest reports a status message every minute; the status becomes ONLINE when the first one arrives
+        updateStatus(ThingStatus.UNKNOWN);
+        restartMessageTimeout();
+    }
 
-        // Note: When initialization can NOT be done set the status with more details for further
-        // analysis. See also class ThingStatusDetail for all available status details.
-        // Add a description to give user information to understand why thing does not work
-        // as expected. E.g.
-        // updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.CONFIGURATION_ERROR,
-        // "Can not access device as username and/or password are invalid");
+    @Override
+    public void bridgeStatusChanged(ThingStatusInfo bridgeStatusInfo) {
+        if (bridgeStatusInfo.getStatus() == ThingStatus.OFFLINE) {
+            cancelMessageTimeout();
+            updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.BRIDGE_OFFLINE);
+        } else if (bridgeStatusInfo.getStatus() == ThingStatus.ONLINE) {
+            updateStatus(ThingStatus.UNKNOWN);
+            restartMessageTimeout();
+        }
+    }
 
-        messageTimeout = scheduleTimeout();
+    @Override
+    public void dispose() {
+        cancelMessageTimeout();
+        super.dispose();
+    }
+
+    /**
+     * Marks the Tempest OFFLINE if no status message arrives within {@link #MESSAGE_TIMEOUT_MINUTES}.
+     */
+    private synchronized void restartMessageTimeout() {
+        cancelMessageTimeout();
+        messageTimeout = scheduler.schedule(() -> updateStatus(ThingStatus.OFFLINE,
+                ThingStatusDetail.COMMUNICATION_ERROR,
+                "No data received from the Tempest for " + MESSAGE_TIMEOUT_MINUTES + " minutes"),
+                MESSAGE_TIMEOUT_MINUTES, TimeUnit.MINUTES);
+    }
+
+    private synchronized void cancelMessageTimeout() {
+        ScheduledFuture<?> timeout = messageTimeout;
+        if (timeout != null) {
+            timeout.cancel(false);
+        }
+        messageTimeout = null;
     }
 
     @Override
     public void eventReceived(InetAddress source, SmartWeatherMessage data) {
-        logger.debug("TempestHandler received message " + data);
+        logger.trace("Tempest received message {}", data);
         if (data instanceof StationStatusMessage || data instanceof DeviceStatusMessage) {
-            logger.debug("got status message message: " + data);
-
-            if (messageTimeout != null) {
-                messageTimeout.cancel(true);
+            if (getThing().getStatus() != ThingStatus.ONLINE) {
+                updateStatus(ThingStatus.ONLINE);
             }
-            if (this.getThing().getStatus() == ThingStatus.OFFLINE) {
-                goOnline();
-            }
-            messageTimeout = scheduler.schedule(new Runnable() {
-                @Override
-                public void run() {
-                    goOffline();
-                }
-            }, 3, TimeUnit.MINUTES);
-
+            restartMessageTimeout();
             // TODO update station status fields
-        } else if (data instanceof ObservationTempestMessage) {
-            handleObservationMessage((ObservationTempestMessage) data);
-        } else if (data instanceof EventRapidWindMessage) {
-            logger.debug("Received Rapid Wind Message.");
-            handleEventRapidWindMessage((EventRapidWindMessage) data);
-        } else if (data instanceof EventPrecipitationMessage) {
-            logger.debug("Received Precipitation Message.");
-            handleEventPrecipitationStartedMessage((EventPrecipitationMessage) data);
-        } else if (data instanceof EventStrikeMessage) {
-            logger.debug("Received Strike Message.");
-            handleEventStrikeMessage((EventStrikeMessage) data);
+        } else if (data instanceof ObservationTempestMessage message) {
+            handleObservationMessage(message);
+        } else if (data instanceof EventRapidWindMessage message) {
+            handleEventRapidWindMessage(message);
+        } else if (data instanceof EventPrecipitationMessage message) {
+            handleEventPrecipitationStartedMessage(message);
+        } else if (data instanceof EventStrikeMessage message) {
+            handleEventStrikeMessage(message);
         } else {
-            logger.warn("not handling message: " + data);
+            logger.debug("Ignoring message {}", data);
         }
     }
 
     private void handleEventRapidWindMessage(EventRapidWindMessage data) {
-        ThingUID uid = getThing().getUID();
         RapidWindData rapidWindData = new RapidWindData(getThing(), data);
-        logger.debug("handling rapid wind record: " + rapidWindData);
-        Event event = RapidWindEventFactoryImpl.createRapidWindEvent(rapidWindData);
-        logger.debug("publisher: " + eventPublisher + ", event: " + event);
-        eventPublisher.post(event);
+        logger.trace("Posting rapid wind event {}", rapidWindData);
+        eventPublisher.post(RapidWindEventFactoryImpl.createRapidWindEvent(rapidWindData));
     }
 
     private void handleEventStrikeMessage(EventStrikeMessage data) {
-        ThingUID uid = getThing().getUID();
         LightningStrikeData lightningStrikeData = new LightningStrikeData(getThing(), data);
-        logger.debug("handling lightning strike record: " + lightningStrikeData);
-        Event event = LightningStrikeEventFactoryImpl.createLightningStrikeEvent(lightningStrikeData);
-        logger.debug("publisher: " + eventPublisher + ", event: " + event);
-        eventPublisher.post(event);
+        logger.debug("Posting lightning strike event {}", lightningStrikeData);
+        eventPublisher.post(LightningStrikeEventFactoryImpl.createLightningStrikeEvent(lightningStrikeData));
     }
 
     private void handleEventPrecipitationStartedMessage(EventPrecipitationMessage data) {
-        ThingUID uid = getThing().getUID();
         PrecipitationStartedData precipitationStartedData = new PrecipitationStartedData(getThing(), data);
-        logger.debug("handling precipitation record: " + precipitationStartedData);
-        Event event = PrecipitationStartedEventFactoryImpl.createPrecipitionStartedEvent(precipitationStartedData);
-        logger.debug("publisher: " + eventPublisher + ", event: " + event);
-        eventPublisher.post(event);
+        logger.debug("Posting precipitation started event {}", precipitationStartedData);
+        eventPublisher.post(
+                PrecipitationStartedEventFactoryImpl.createPrecipitionStartedEvent(precipitationStartedData));
     }
 
     public void handleObservationMessage(ObservationTempestMessage data) {
-        // logger.warn("Received observation message: " + data);
         List<List> l = data.getObs();
         ThingUID uid = getThing().getUID();
 
         for (List obs : l) {
-            logger.debug("parsing observation record: " + obs);
+            logger.trace("Parsing observation record {}", obs);
 
             String[] fields = { CHANNEL_EPOCH, CHANNEL_WIND_LULL, CHANNEL_WIND_AVG, CHANNEL_WIND_GUST,
                     CHANNEL_WIND_DIRECTION, CHANNEL_WIND_SAMPLE_INTERVAL, CHANNEL_PRESSURE, CHANNEL_TEMPERATURE,
@@ -196,9 +187,10 @@ public class SmartWeatherTempestHandler extends BaseThingHandler implements Smar
 
                 State type = null;
 
-                if (val == null)
-                    type = new DecimalType(0);
-                else {
+                if (val == null) {
+                    // the Tempest sends null for values it could not measure
+                    type = UnDefType.UNDEF;
+                } else {
                     switch (f) {
                         case CHANNEL_EPOCH:
                             type = new DateTimeType(Instant.ofEpochMilli(val.longValue() * 1000L).atZone(UTC));
@@ -258,27 +250,15 @@ public class SmartWeatherTempestHandler extends BaseThingHandler implements Smar
                             type = new QuantityType<Length>(val, SIUnits.METRE.multiply(1000.0));
                             break;
                         default:
-                            logger.info("Received unknown field " + f + " with value " + val);
+                            logger.debug("Received unknown field {} with value {}", f, val);
                     }
                 }
 
                 if (type != null) {
-                    logger.debug("posting type = " + type);
                     updateState(new ChannelUID(uid, f), type);
-                } else {
-                    logger.warn("passed through without a type to update.");
                 }
             }
         }
     }
 
-    private void goOnline() {
-        this.updateStatus(ThingStatus.ONLINE);
-        messageTimeout = null;
-    }
-
-    protected void goOffline() {
-        this.updateStatus(ThingStatus.OFFLINE);
-        messageTimeout = null;
-    }
 }

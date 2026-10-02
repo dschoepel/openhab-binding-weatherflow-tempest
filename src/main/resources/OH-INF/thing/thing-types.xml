@@ -297,11 +297,11 @@
 	</channel-type>
 
 	<channel-type id="humidity">
-		<item-type>Number:Dimensionless</item-type>
+		<item-type unitHint="%">Number:Dimensionless</item-type>
 		<label>Relative Humidity</label>
 		<description>Relative Humidity</description>
 		<category>Humidity</category>
-		<state pattern="%.1f %unit%" readOnly="true"></state>
+		<state pattern="%.0f %unit%" readOnly="true"></state>
 	</channel-type>
 
 	<channel-type id="pressure">
