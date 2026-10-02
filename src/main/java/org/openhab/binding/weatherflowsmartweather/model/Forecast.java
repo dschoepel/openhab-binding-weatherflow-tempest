@@ -47,8 +47,8 @@ public class Forecast {
             }
         }
 
-        logger.info("Enriching {} hourly forecasts", hourly.length);
-        logger.info("Enriching {} daily forecasts", daily.length);
+        logger.debug("Enriching {} hourly forecasts", hourly.length);
+        logger.debug("Enriching {} daily forecasts", daily.length);
         for (HourlyForecast hour : hourly) {
             DailyForecast myDay;
             for (int i = 0; i < daily.length; i++) {
