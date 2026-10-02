@@ -26,6 +26,7 @@ import org.openhab.binding.weatherflowsmartweather.handler.*;
 import org.openhab.core.config.core.Configuration;
 import org.openhab.core.config.discovery.DiscoveryService;
 import org.openhab.core.events.EventPublisher;
+import org.openhab.core.io.net.http.HttpClientFactory;
 import org.openhab.core.thing.Bridge;
 import org.openhab.core.thing.Thing;
 import org.openhab.core.thing.ThingTypeUID;
@@ -65,6 +66,8 @@ public class WeatherFlowSmartWeatherHandlerFactory extends BaseThingHandlerFacto
     LightningStrikeEventFactory lightningStrikeEventFactory;
     @Nullable
     EventPublisher eventPublisher;
+    @Nullable
+    HttpClientFactory httpClientFactory;
 
     public WeatherFlowSmartWeatherHandlerFactory() {
         logger.info("Creating WeatherFlowSmartWeatherHandlerFactory.");
@@ -115,6 +118,15 @@ public class WeatherFlowSmartWeatherHandlerFactory extends BaseThingHandlerFacto
         this.eventPublisher = null;
     }
 
+    @Reference
+    protected void setHttpClientFactory(HttpClientFactory httpClientFactory) {
+        this.httpClientFactory = httpClientFactory;
+    }
+
+    protected void unsetHttpClientFactory(HttpClientFactory httpClientFactory) {
+        this.httpClientFactory = null;
+    }
+
     @Override
     public boolean supportsThingType(ThingTypeUID thingTypeUID) {
         return SUPPORTED_THING_TYPES_UIDS.contains(thingTypeUID);
@@ -141,7 +153,12 @@ public class WeatherFlowSmartWeatherHandlerFactory extends BaseThingHandlerFacto
             return new SmartWeatherTempestHandler(thing, rapidWindEventFactory, precipitationStartedEventFactory,
                     lightningStrikeEventFactory, eventPublisher);
         } else if (thingTypeUID.equals(THING_TYPE_SMART_WEATHER_BETTER_FORECAST)) {
-            return new SmartWeatherBetterForecastHandler(thing);
+            HttpClientFactory clientFactory = httpClientFactory;
+            if (clientFactory == null) {
+                logger.warn("HTTP client factory is not available, cannot create {}", thing.getUID());
+                return null;
+            }
+            return new SmartWeatherBetterForecastHandler(thing, clientFactory.getCommonHttpClient());
         } else {
             logger.warn("No handler for thingTypeUID=" + thingTypeUID);
             return null;
