@@ -24,7 +24,6 @@ import java.util.concurrent.TimeUnit;
 
 import org.eclipse.jdt.annotation.Nullable;
 import org.openhab.binding.weatherflowsmartweather.SmartWeatherEventListener;
-import org.openhab.binding.weatherflowsmartweather.WeatherFlowSmartWeatherBindingConstants;
 import org.openhab.binding.weatherflowsmartweather.internal.SmartWeatherUDPListenerService;
 import org.openhab.binding.weatherflowsmartweather.model.*;
 import org.openhab.core.library.types.DateTimeType;
@@ -47,9 +46,11 @@ public class SmartWeatherHubHandler extends BaseBridgeHandler implements SmartWe
 
     private final Logger logger = LoggerFactory.getLogger(SmartWeatherHubHandler.class);
 
-    protected SmartWeatherUDPListenerService udpListener;
+    private final SmartWeatherUDPListenerService udpListener;
 
-    private ScheduledFuture<?> messageTimeout;
+    private static final int MESSAGE_TIMEOUT_MINUTES = 3;
+
+    private @Nullable ScheduledFuture<?> messageTimeout;
 
     public SmartWeatherHubHandler(Bridge bridge, SmartWeatherUDPListenerService udpListener) {
         super(bridge);
@@ -63,13 +64,36 @@ public class SmartWeatherHubHandler extends BaseBridgeHandler implements SmartWe
 
     @Override
     public void initialize() {
-        if (udpListener != null) {
-            udpListener.registerListener(this);
-            updateStatus(ThingStatus.ONLINE);
+        // the hub broadcasts a status message every few seconds; the status becomes ONLINE when the first one arrives
+        updateStatus(ThingStatus.UNKNOWN);
+        udpListener.registerListener(this);
+        restartMessageTimeout();
+    }
 
-        } else {
-            updateStatus(ThingStatus.OFFLINE);
+    @Override
+    public void dispose() {
+        udpListener.unregisterListener(this);
+        cancelMessageTimeout();
+        super.dispose();
+    }
+
+    /**
+     * Marks the hub OFFLINE if no status message arrives within {@link #MESSAGE_TIMEOUT_MINUTES}.
+     */
+    private synchronized void restartMessageTimeout() {
+        cancelMessageTimeout();
+        messageTimeout = scheduler.schedule(() -> updateStatus(ThingStatus.OFFLINE,
+                ThingStatusDetail.COMMUNICATION_ERROR,
+                "No data received from the hub for " + MESSAGE_TIMEOUT_MINUTES + " minutes"),
+                MESSAGE_TIMEOUT_MINUTES, TimeUnit.MINUTES);
+    }
+
+    private synchronized void cancelMessageTimeout() {
+        ScheduledFuture<?> timeout = messageTimeout;
+        if (timeout != null) {
+            timeout.cancel(false);
         }
+        messageTimeout = null;
     }
 
     @Nullable
@@ -91,163 +115,48 @@ public class SmartWeatherHubHandler extends BaseBridgeHandler implements SmartWe
     @Override
     public void eventReceived(InetAddress source, SmartWeatherMessage data) {
         String serial = data.getSerial_number();
+        if (serial == null) {
+            return;
+        }
 
-        if (serial != null && serial.equals(
-                this.getThing().getProperties().get(WeatherFlowSmartWeatherBindingConstants.PROPERTY_SERIAL_NUMBER))) {
-            // logger.warn("Bridge Got message!");
-
-            if (data instanceof HubStatusMessage) {
-                try {
-                    if (messageTimeout != null) {
-                        messageTimeout.cancel(true);
-                    }
-                    if (this.getThing().getStatus() == ThingStatus.OFFLINE) {
-                        goOnline();
-                    }
-                    messageTimeout = scheduler.schedule(new Runnable() {
-                        @Override
-                        public void run() {
-                            goOffline();
-                        }
-                    }, 3, TimeUnit.MINUTES);
-
-                    handleHubStatusMessage((HubStatusMessage) data);
-                } catch (Exception e) {
-                    logger.warn("Got exception", e);
+        if (serial.equals(getThing().getProperties().get(PROPERTY_SERIAL_NUMBER))) {
+            if (data instanceof HubStatusMessage message) {
+                if (getThing().getStatus() != ThingStatus.ONLINE) {
+                    updateStatus(ThingStatus.ONLINE);
                 }
+                restartMessageTimeout();
+                handleHubStatusMessage(message);
             }
-        } else if (serial != null) { // TODO need a better approach to this
-            if (data instanceof EventRapidWindMessage) {
-                EventRapidWindMessage message = (EventRapidWindMessage) data;
-                String serialNumber = message.getSerial_number();
+            return;
+        }
 
-                ThingTypeUID deviceType = thingTypeUidFromSerial(serialNumber);
-                ThingUID thingUid = new ThingUID(deviceType, getThing().getUID(), serialNumber);
+        forwardToSensor(source, serial, data);
+    }
 
-                Thing t = this.getThingByUID(thingUid);
-                if (t == null) {
-                    logger.debug("rapid wind observation but not for us.");
-                    return;
-                } // not our hub and sensor combo.
-                SmartWeatherEventListener handler = (SmartWeatherEventListener) t.getHandler();
-                handler.eventReceived(source, message);
-            } else if (data instanceof ObservationAirQualityMessage) {
-                ObservationAirQualityMessage message = (ObservationAirQualityMessage) data;
-                String serialNumber = message.getSerial_number();
+    /**
+     * Passes a sensor message to the handler of the matching child Thing, if it exists under this hub and is enabled.
+     */
+    private void forwardToSensor(InetAddress source, String serial, SmartWeatherMessage data) {
+        ThingTypeUID deviceType = thingTypeUidFromSerial(serial);
+        if (deviceType == null) {
+            logger.trace("Ignoring message from unsupported device {}", serial);
+            return;
+        }
 
-                ThingTypeUID deviceType = thingTypeUidFromSerial(serialNumber);
-                ThingUID thingUid = new ThingUID(deviceType, getThing().getUID(), serialNumber);
+        Thing thing = getThingByUID(new ThingUID(deviceType, getThing().getUID(), serial));
+        if (thing == null) {
+            // a sensor on another hub, or one that has not been added as a Thing
+            logger.trace("No Thing for device {} under this hub", serial);
+            return;
+        }
 
-                Thing t = this.getThingByUID(thingUid);
-                if (t == null) {
-                    logger.debug("airquality observation but not for us.");
-                    return;
-                } // not our hub and sensor combo.
-                SmartWeatherEventListener handler = (SmartWeatherEventListener) t.getHandler();
-                handler.eventReceived(source, message);
-            } else if (data instanceof ObservationAirMessage) {
-                ObservationAirMessage message = (ObservationAirMessage) data;
-                String serialNumber = message.getSerial_number();
-
-                ThingTypeUID deviceType = thingTypeUidFromSerial(serialNumber);
-                ThingUID thingUid = new ThingUID(deviceType, getThing().getUID(), serialNumber);
-
-                Thing t = this.getThingByUID(thingUid);
-                if (t == null) {
-                    logger.debug("air observation but not for us.");
-                    return;
-                } // not our hub and sensor combo.
-                SmartWeatherEventListener handler = (SmartWeatherEventListener) t.getHandler();
-                handler.eventReceived(source, message);
-            } else if (data instanceof ObservationSkyMessage) {
-                ObservationSkyMessage message = (ObservationSkyMessage) data;
-                String serialNumber = message.getSerial_number();
-
-                ThingTypeUID deviceType = thingTypeUidFromSerial(serialNumber);
-                ThingUID thingUid = new ThingUID(deviceType, getThing().getUID(), serialNumber);
-
-                Thing t = this.getThingByUID(thingUid);
-                if (t == null) {
-                    logger.debug("sky observation but not for us.");
-                    return;
-                } // not our hub and sensor combo.
-                SmartWeatherEventListener handler = (SmartWeatherEventListener) t.getHandler();
-                handler.eventReceived(source, message);
-            } else if (data instanceof ObservationTempestMessage) {
-                ObservationTempestMessage message = (ObservationTempestMessage) data;
-                String serialNumber = message.getSerial_number();
-
-                ThingTypeUID deviceType = thingTypeUidFromSerial(serialNumber);
-                ThingUID thingUid = new ThingUID(deviceType, getThing().getUID(), serialNumber);
-
-                Thing t = this.getThingByUID(thingUid);
-                if (t == null) {
-                    logger.debug("tempest observation but not for us.");
-                    return;
-                } // not our hub and sensor combo.
-                SmartWeatherEventListener handler = (SmartWeatherEventListener) t.getHandler();
-                handler.eventReceived(source, message);
-            } else if (data instanceof EventStrikeMessage) {
-                EventStrikeMessage message = (EventStrikeMessage) data;
-                String serialNumber = message.getSerial_number();
-
-                ThingTypeUID deviceType = thingTypeUidFromSerial(serialNumber);
-                ThingUID thingUid = new ThingUID(deviceType, getThing().getUID(), serialNumber);
-
-                Thing t = this.getThingByUID(thingUid);
-                if (t == null) {
-                    logger.debug("event strike message but not for us.");
-                    return;
-                } // not our hub and sensor combo.
-                SmartWeatherEventListener handler = (SmartWeatherEventListener) t.getHandler();
-                handler.eventReceived(source, message);
-            } else if (data instanceof EventPrecipitationMessage) {
-                EventPrecipitationMessage message = (EventPrecipitationMessage) data;
-                String serialNumber = message.getSerial_number();
-
-                ThingTypeUID deviceType = thingTypeUidFromSerial(serialNumber);
-                ThingUID thingUid = new ThingUID(deviceType, getThing().getUID(), serialNumber);
-
-                Thing t = this.getThingByUID(thingUid);
-                if (t == null) {
-                    logger.debug("event precipitation message but not for us.");
-                    return;
-                } // not our hub and sensor combo.
-                SmartWeatherEventListener handler = (SmartWeatherEventListener) t.getHandler();
-                handler.eventReceived(source, message);
-            } else if (data instanceof DeviceStatusMessage) {
-                DeviceStatusMessage message = (DeviceStatusMessage) data;
-                String serialNumber = message.getSerial_number();
-
-                ThingTypeUID deviceType = thingTypeUidFromSerial(serialNumber);
-                ThingUID thingUid = new ThingUID(deviceType, getThing().getUID(), serialNumber);
-
-                Thing t = this.getThingByUID(thingUid);
-                if (t == null) {
-                    logger.debug("device status but not for us: " + thingUid);
-                    return;
-                } // not our hub and sensor combo.
-                SmartWeatherEventListener handler = (SmartWeatherEventListener) t.getHandler();
-                handler.eventReceived(source, message);
-            } else if (data instanceof StationStatusMessage) {
-                StationStatusMessage message = (StationStatusMessage) data;
-                String serialNumber = message.getSerial_number();
-
-                ThingTypeUID deviceType = thingTypeUidFromSerial(serialNumber);
-                ThingUID thingUid = new ThingUID(deviceType, getThing().getUID(), serialNumber);
-
-                Thing t = this.getThingByUID(thingUid);
-                if (t == null) {
-                    logger.debug("station status but not for us.");
-                    return;
-                } // not our hub and sensor combo.
-                SmartWeatherEventListener handler = (SmartWeatherEventListener) t.getHandler();
-                handler.eventReceived(source, message);
-            }
+        // the handler is null while the Thing is disabled or still initializing
+        if (thing.getHandler() instanceof SmartWeatherEventListener listener) {
+            listener.eventReceived(source, data);
         }
     }
 
-    private ThingTypeUID thingTypeUidFromSerial(String serialNumber) {
+    private @Nullable ThingTypeUID thingTypeUidFromSerial(String serialNumber) {
         if (serialNumber.startsWith("SK"))
             return THING_TYPE_SMART_WEATHER_SKY;
         else if (serialNumber.startsWith("AR"))
@@ -270,23 +179,5 @@ public class SmartWeatherHubHandler extends BaseBridgeHandler implements SmartWe
         updateState(new ChannelUID(getThing().getUID(), CHANNEL_UPTIME), new DecimalType(data.getUptime()));
 
         // TODO Does it make sense to include the new fields from the v30 status message? Mostly debug info, it seems.
-    }
-
-    private void goOnline() {
-        this.updateStatus(ThingStatus.ONLINE);
-        messageTimeout = null;
-    }
-
-    protected void goOffline() {
-        this.updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.BRIDGE_OFFLINE);
-        messageTimeout = null;
-    }
-
-    @Override
-    public void dispose() {
-        if (udpListener != null) {
-            udpListener.unregisterListener(this);
-        }
-        super.dispose();
     }
 }
