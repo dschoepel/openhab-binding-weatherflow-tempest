@@ -157,15 +157,8 @@ public class SmartWeatherHubHandler extends BaseBridgeHandler implements SmartWe
     }
 
     private @Nullable ThingTypeUID thingTypeUidFromSerial(String serialNumber) {
-        if (serialNumber.startsWith("SK"))
-            return THING_TYPE_SMART_WEATHER_SKY;
-        else if (serialNumber.startsWith("AR"))
-            return THING_TYPE_SMART_WEATHER_AIR;
-        else if (serialNumber.startsWith("AQ"))
-            return THING_TYPE_SMART_WEATHER_AIRQUALITY;
-        else if (serialNumber.startsWith("ST"))
-            return THING_TYPE_SMART_WEATHER_TEMPEST;
-        return null;
+        // only the Tempest is supported
+        return serialNumber.startsWith("ST") ? THING_TYPE_SMART_WEATHER_TEMPEST : null;
     }
 
     // wonder if perhaps the refresh rate on this data may be too high by default... do we really need to

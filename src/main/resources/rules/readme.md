@@ -12,7 +12,7 @@ Let's create a rule that sends a cloud notification when things are windy. Note 
 1. Click on the Rules tab in PaperUI.
 2. Click on the "+" icon and select "New Rule..." to create a new rule.
 3. Click on the "+" icon next to "When..." and select "when a rapid wind event occurs" from the dropdown.
-4. Click "Next" and choose the Smartweather Sky/Tempest you want to trigger from. Click "OK".
+4. Click "Next" and choose the Smartweather Tempest you want to trigger from. Click "OK".
 5. Click on the "+" icon next to "then..." and choose "execute a given script" from the dropdown. Click "Next".
 6. Choose "ECMAScript" from the script type dropdown.
 7. In the Script text box, enter the script below and click "OK".

@@ -142,13 +142,6 @@ public class WeatherFlowSmartWeatherHandlerFactory extends BaseThingHandlerFacto
             SmartWeatherHubHandler hubHandler = new SmartWeatherHubHandler((Bridge) thing, udpListener);
             registerDeviceDiscoveryService(hubHandler);
             return hubHandler;
-        } else if (thingTypeUID.equals(THING_TYPE_SMART_WEATHER_AIRQUALITY)) {
-            return new SmartWeatherAirQualityHandler(thing, eventPublisher);
-        } else if (thingTypeUID.equals(THING_TYPE_SMART_WEATHER_AIR)) {
-            return new SmartWeatherAirHandler(thing, lightningStrikeEventFactory, eventPublisher);
-        } else if (thingTypeUID.equals(THING_TYPE_SMART_WEATHER_SKY)) {
-            return new SmartWeatherSkyHandler(thing, rapidWindEventFactory, precipitationStartedEventFactory,
-                    eventPublisher);
         } else if (thingTypeUID.equals(THING_TYPE_SMART_WEATHER_TEMPEST)) {
             return new SmartWeatherTempestHandler(thing, rapidWindEventFactory, precipitationStartedEventFactory,
                     lightningStrikeEventFactory, eventPublisher);
