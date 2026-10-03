@@ -1,3 +1,15 @@
+/*
+ * Copyright (c) 2010-2026 Contributors to the openHAB project
+ *
+ * See the NOTICE file(s) distributed with this work for additional
+ * information.
+ *
+ * This program and the accompanying materials are made available under the
+ * terms of the Eclipse Public License 2.0 which is available at
+ * http://www.eclipse.org/legal/epl-2.0
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ */
 package org.openhab.binding.weatherflowsmartweather.automation;
 
 import java.util.*;
@@ -81,7 +93,7 @@ public class RapidWindTrigger extends BaseTriggerModuleHandler implements EventF
 
         topic = EVENT_TOPIC.replace("{uid}", sensorThingUid);
 
-        log.debug("Created for " + sensorThingUid + ".");
+        log.debug("Created for {}", sensorThingUid);
 
         this.context = context;
 
@@ -89,7 +101,7 @@ public class RapidWindTrigger extends BaseTriggerModuleHandler implements EventF
         properties.put("event.topics", this.topic);
 
         registration = this.context.registerService(EventSubscriber.class, this, properties);
-        log.info("Trigger Registered EventSubscriber: Topic: {}, Properties: {}, Registration: {}",
+        log.debug("Trigger Registered EventSubscriber: Topic: {}, Properties: {}, Registration: {}",
                 new Object[] { topic }, properties, registration);
     }
 
@@ -103,7 +115,7 @@ public class RapidWindTrigger extends BaseTriggerModuleHandler implements EventF
     // @Override
     // public void handleEvent(Event event) {
     // if(true) return;
-    // log.warn("Handle event: topic=" + event.getTopic() + ", source=" + event.getProperty("source") + ".");
+    // log.debug("Handle event: topic={}, source={}", event.getTopic(), event.getProperty("source"));
     // if(!skyThingUid.equals(event.getProperty("source"))) {
     // log.warn("Got rapid wind event, but not for us...");
     // return;
@@ -134,14 +146,14 @@ public class RapidWindTrigger extends BaseTriggerModuleHandler implements EventF
      */
     // public void setRuleEngineCallback(final TriggerHandlerCallback callback) {
     // ruleEngineCallback = callback;
-    // log.warn("setCallback(" + callback + ")");
+    // log.debug("setCallback({})", callback);
     // final Dictionary<String, Object> registrationProperties = new Hashtable<String, Object>();
     // String topic = EVENT_TOPIC.replace("{uid}", skyThingUid);
     // // String [] topics = {topic};
-    // log.warn("topic: " + topic);
+    // log.debug("topic: {}", topic);
     // registrationProperties.put(EventConstants.EVENT_TOPIC, topic);
     // registration = context.registerService(EventSubscriber.class, this, registrationProperties);
-    // log.warn("registration: " + registration);
+    // log.debug("registration: {}", registration);
     // }
 
     /**
@@ -178,18 +190,18 @@ public class RapidWindTrigger extends BaseTriggerModuleHandler implements EventF
 
     @Override
     public void receive(Event event) {
-        log.debug("Receive oh2 event: topic=" + event.getTopic() + ", source=" + event.getSource() + ".");
+        log.debug("Receive oh2 event: topic={}, source={}", event.getTopic(), event.getSource());
         if (!sensorThingUid.equals(event.getSource())) {
             // log.warn("Got rapid wind event, but not for us...");
             return;
         }
 
         if (!topic.equals(event.getTopic())) {
-            log.warn("Got event without correct topic.");
+            log.trace("Got event without correct topic.");
             return;
         }
 
-        log.debug("EventType: " + event.getType() + ", expected " + RapidWindEvent.TYPE);
+        log.debug("EventType: {}, expected {}", event.getType(), RapidWindEvent.TYPE);
         if (event.getType() != RapidWindEvent.TYPE) {
             log.warn("Got event without correct type. this should not happen.");
             return;

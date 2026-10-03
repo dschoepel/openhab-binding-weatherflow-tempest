@@ -1,8 +1,8 @@
-/**
- * Copyright (c) 2014,2018 Contributors to the Eclipse Foundation
+/*
+ * Copyright (c) 2010-2026 Contributors to the openHAB project
  *
  * See the NOTICE file(s) distributed with this work for additional
- * information regarding copyright ownership.
+ * information.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License 2.0 which is available at
@@ -65,7 +65,7 @@ public class HandlerFactory extends BaseModuleHandlerFactory implements ModuleHa
         TYPES = Collections.unmodifiableCollection(temp);
 
         LOGGER = LoggerFactory.getLogger(HandlerFactory.class);
-        LOGGER.info("Initialize!");
+        LOGGER.debug("Initialize!");
     }
 
     private BundleContext bundleContext;
@@ -73,7 +73,7 @@ public class HandlerFactory extends BaseModuleHandlerFactory implements ModuleHa
     @Override
     public ModuleHandler getHandler(Module module, String ruleUID) {
         String id = ruleUID + module.getId();
-        LOGGER.info("getHandler");
+        LOGGER.debug("getHandler");
         return super.getHandler(module, ruleUID);
     }
 
@@ -83,7 +83,7 @@ public class HandlerFactory extends BaseModuleHandlerFactory implements ModuleHa
      */
     @Override
     protected ModuleHandler internalCreate(Module module, String ruleUID) {
-        LOGGER.info("internalCreate " + module.getTypeUID() + " " + ruleUID);
+        LOGGER.debug("internalCreate {} {}", module.getTypeUID(), ruleUID);
         if (RapidWindTrigger.UID.equals(module.getTypeUID())) {
             return new RapidWindTrigger((Trigger) module, bundleContext);
         } else if (LightningStrikeTrigger.UID.equals(module.getTypeUID())) {
@@ -91,7 +91,7 @@ public class HandlerFactory extends BaseModuleHandlerFactory implements ModuleHa
         } else if (PrecipitationStartedTrigger.UID.equals(module.getTypeUID())) {
             return new PrecipitationStartedTrigger((Trigger) module, bundleContext);
         } else {
-            LOGGER.error(MODULE_HANDLER_FACTORY_NAME + " Not supported moduleHandler: {}", module.getTypeUID());
+            LOGGER.error("{} Not supported moduleHandler: {}", MODULE_HANDLER_FACTORY_NAME, module.getTypeUID());
         }
 
         return null;
