@@ -1,3 +1,15 @@
+/*
+ * Copyright (c) 2010-2026 Contributors to the openHAB project
+ *
+ * See the NOTICE file(s) distributed with this work for additional
+ * information.
+ *
+ * This program and the accompanying materials are made available under the
+ * terms of the Eclipse Public License 2.0 which is available at
+ * http://www.eclipse.org/legal/epl-2.0
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ */
 package org.openhab.binding.weatherflowsmartweather.event;
 
 import static org.openhab.binding.weatherflowsmartweather.util.GsonUtils.gsonDateTime;
@@ -30,8 +42,7 @@ public class PrecipitationStartedEventFactoryImpl extends AbstractEventFactory
     @Override
     protected Event createEventByType(String eventType, String topic, String payload, String source) throws Exception {
         if (PrecipitationStartedEvent.TYPE.equals(eventType)) {
-            log.debug(
-                    "creating event " + eventType + " topic=" + topic + ", payload=" + payload + ", source=" + source);
+            log.debug("creating event {} topic={}, payload={}, source={}", eventType, topic, payload, source);
             return createPrecipitionStartedEvent(topic, payload);
         }
         throw new IllegalArgumentException("Unsupported event type " + eventType);

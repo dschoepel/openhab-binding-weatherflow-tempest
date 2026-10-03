@@ -1,33 +1,33 @@
-{  
-   "triggers":[  
-      {  
-         "uid":"RapidWindTrigger",
-         "label":"when a rapid wind event happens",
-         "description":"Triggers the Rule on Rapid Wind Event",
-         "configDescriptions":[
-            {  
-               "name":"sensorThingUid",
-               "type":"TEXT",
-               "context":"thing",
-               "label":"Sensor Thing",
-               "description":"The WeatherFlow Tempest to use as the source for this trigger.",
-               "required":true
-            }
-         ],
-         "outputs":[  
-            {
-               "name":"event",
-               "type":"org.eclipse.smarthome.core.events.Event",
-               "label":"Triggering event",
-               "description":"OH Event"
-            },
-            {
-               "name":"outputValue",
-               "type":"org.openhab.binding.weatherflowsmartweather.model.RapidWindData",
-               "label":"Output value",
-               "description":"RapidWindData"
-            }
-         ]
-      }
-   ]
+{
+	"triggers": [
+		{
+			"uid": "RapidWindTrigger",
+			"label": "when a rapid wind event happens",
+			"description": "Triggers the Rule on Rapid Wind Event",
+			"configDescriptions": [
+				{
+					"name": "sensorThingUid",
+					"type": "TEXT",
+					"context": "thing",
+					"label": "Sensor Thing",
+					"description": "The WeatherFlow Tempest to use as the source for this trigger.",
+					"required": true
+				}
+			],
+			"outputs": [
+				{
+					"name": "event",
+					"type": "org.eclipse.smarthome.core.events.Event",
+					"label": "Triggering event",
+					"description": "OH Event"
+				},
+				{
+					"name": "outputValue",
+					"type": "org.openhab.binding.weatherflowsmartweather.model.RapidWindData",
+					"label": "Output value",
+					"description": "RapidWindData"
+				}
+			]
+		}
+	]
 }

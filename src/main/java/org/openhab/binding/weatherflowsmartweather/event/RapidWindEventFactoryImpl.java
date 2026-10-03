@@ -1,3 +1,15 @@
+/*
+ * Copyright (c) 2010-2026 Contributors to the openHAB project
+ *
+ * See the NOTICE file(s) distributed with this work for additional
+ * information.
+ *
+ * This program and the accompanying materials are made available under the
+ * terms of the Eclipse Public License 2.0 which is available at
+ * http://www.eclipse.org/legal/epl-2.0
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ */
 package org.openhab.binding.weatherflowsmartweather.event;
 
 import static org.openhab.binding.weatherflowsmartweather.util.GsonUtils.gsonDateTime;
@@ -30,7 +42,7 @@ public class RapidWindEventFactoryImpl extends AbstractEventFactory implements R
     public static RapidWindEvent createRapidWindEvent(RapidWindData rapid_wind) {
         String topic = RapidWindEventFactoryImpl.buildTopic(RapidWindEventFactoryImpl.RAPID_WIND_EVENT_TOPIC,
                 rapid_wind.getThingUID());
-        log.debug("Topic: " + topic);
+        log.debug("Topic: {}", topic);
         String payload = null;
 
         try {
@@ -38,17 +50,16 @@ public class RapidWindEventFactoryImpl extends AbstractEventFactory implements R
         } catch (Throwable e) {
             log.error("Error serializing payload.", e);
         }
-        log.debug("Payload: " + payload);
+        log.debug("Payload: {}", payload);
         return new RapidWindEvent(topic, payload, rapid_wind);
     }
 
     @Override
     protected Event createEventByType(String eventType, String topic, String payload, String source) throws Exception {
-        // log.debug("Creating event " + eventType + " topic=" + topic + ", payload=" + payload + ", source=" + source);
+        // log.debug("Creating event {} topic={}, payload={}, source={}", eventType, topic, payload, source);
         if (RapidWindEvent.TYPE.equals(eventType)) {
             if (log.isDebugEnabled())
-                log.debug("Creating event " + eventType + " topic=" + topic + ", payload=" + payload + ", source="
-                        + source);
+                log.debug("Creating event {} topic={}, payload={}, source={}", eventType, topic, payload, source);
             return createRapidWindEvent(topic, payload);
         }
         throw new IllegalArgumentException("Unsupported event type " + eventType);

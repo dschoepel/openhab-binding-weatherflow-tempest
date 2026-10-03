@@ -1,8 +1,8 @@
-/**
- * Copyright (c) 2014,2017 by the respective copyright holders.
+/*
+ * Copyright (c) 2010-2026 Contributors to the openHAB project
  *
  * See the NOTICE file(s) distributed with this work for additional
- * information regarding copyright ownership.
+ * information.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License 2.0 which is available at
@@ -70,7 +70,7 @@ public class WeatherFlowSmartWeatherHandlerFactory extends BaseThingHandlerFacto
     HttpClientFactory httpClientFactory;
 
     public WeatherFlowSmartWeatherHandlerFactory() {
-        logger.info("Creating WeatherFlowSmartWeatherHandlerFactory.");
+        logger.debug("Creating WeatherFlowSmartWeatherHandlerFactory.");
     }
 
     @Reference
@@ -136,7 +136,7 @@ public class WeatherFlowSmartWeatherHandlerFactory extends BaseThingHandlerFacto
     protected @Nullable ThingHandler createHandler(Thing thing) {
         ThingTypeUID thingTypeUID = thing.getThingTypeUID();
 
-        logger.info("Creating handler for thing=" + thingTypeUID);
+        logger.debug("Creating handler for thing={}", thingTypeUID);
 
         if (thingTypeUID.equals(THING_TYPE_SMART_WEATHER_HUB)) {
             SmartWeatherHubHandler hubHandler = new SmartWeatherHubHandler((Bridge) thing, udpListener);
@@ -153,28 +153,28 @@ public class WeatherFlowSmartWeatherHandlerFactory extends BaseThingHandlerFacto
             }
             return new SmartWeatherBetterForecastHandler(thing, clientFactory.getCommonHttpClient());
         } else {
-            logger.warn("No handler for thingTypeUID=" + thingTypeUID);
+            logger.warn("No handler for thingTypeUID={}", thingTypeUID);
             return null;
         }
     }
 
     @Override
     protected @Nullable Thing createThing(ThingTypeUID thingTypeUID, Configuration configuration, ThingUID thingUID) {
-        logger.warn("Creating thing for thing=" + thingTypeUID);
-        logger.warn("ThingType: " + getThingTypeByUID(thingTypeUID));
+        logger.debug("Creating thing for thing={}", thingTypeUID);
+        logger.debug("ThingType: {}", getThingTypeByUID(thingTypeUID));
         return super.createThing(thingTypeUID, configuration, thingUID);
     }
 
     @Override
     public @Nullable Thing createThing(ThingTypeUID thingTypeUID, Configuration configuration,
             @Nullable ThingUID thingUID, @Nullable ThingUID bridgeUID) {
-        logger.warn("Creating thing for thing=" + thingTypeUID);
-        logger.warn("ThingType: " + getThingTypeByUID(thingTypeUID));
+        logger.debug("Creating thing for thing={}", thingTypeUID);
+        logger.debug("ThingType: {}", getThingTypeByUID(thingTypeUID));
         return super.createThing(thingTypeUID, configuration, thingUID, bridgeUID);
     }
 
     private synchronized void registerDeviceDiscoveryService(SmartWeatherHubHandler hubHandler) {
-        logger.debug("Registering Device Discovery Service " + hubHandler);
+        logger.debug("Registering Device Discovery Service {}", hubHandler);
         SmartWeatherStationDiscoveryService discoveryService = new SmartWeatherStationDiscoveryService(udpListener,
                 hubHandler);
         discoveryService.start();

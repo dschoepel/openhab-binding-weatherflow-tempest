@@ -1,3 +1,15 @@
+/*
+ * Copyright (c) 2010-2026 Contributors to the openHAB project
+ *
+ * See the NOTICE file(s) distributed with this work for additional
+ * information.
+ *
+ * This program and the accompanying materials are made available under the
+ * terms of the Eclipse Public License 2.0 which is available at
+ * http://www.eclipse.org/legal/epl-2.0
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ */
 package org.openhab.binding.weatherflowsmartweather.event;
 
 import static org.openhab.binding.weatherflowsmartweather.util.GsonUtils.gsonDateTime;
@@ -29,7 +41,7 @@ public class LightningStrikeEventFactoryImpl extends AbstractEventFactory implem
     public static LightningStrikeEvent createLightningStrikeEvent(LightningStrikeData lightning_strike) {
         String topic = LightningStrikeEventFactoryImpl.buildTopic(
                 LightningStrikeEventFactoryImpl.LIGHTNING_STRIKE_EVENT_TOPIC, lightning_strike.getThingUID());
-        log.debug("Topic: " + topic);
+        log.debug("Topic: {}", topic);
         String payload = null;
 
         try {
@@ -37,15 +49,14 @@ public class LightningStrikeEventFactoryImpl extends AbstractEventFactory implem
         } catch (Throwable e) {
             log.error("Error serializing payload.", e);
         }
-        log.debug("Payload: " + payload);
+        log.debug("Payload: {}", payload);
         return new LightningStrikeEvent(topic, payload, lightning_strike);
     }
 
     @Override
     protected Event createEventByType(String eventType, String topic, String payload, String source) throws Exception {
         if (LightningStrikeEvent.TYPE.equals(eventType)) {
-            log.debug(
-                    "creating event " + eventType + " topic=" + topic + ", payload=" + payload + ", source=" + source);
+            log.debug("creating event {} topic={}, payload={}, source={}", eventType, topic, payload, source);
             return createLightningStrikeEvent(topic, payload);
         }
         throw new IllegalArgumentException("Unsupported event type " + eventType);

@@ -1,8 +1,8 @@
-/**
- * Copyright (c) 2014,2017 by the respective copyright holders.
+/*
+ * Copyright (c) 2010-2026 Contributors to the openHAB project
  *
  * See the NOTICE file(s) distributed with this work for additional
- * information regarding copyright ownership.
+ * information.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License 2.0 which is available at
@@ -82,9 +82,9 @@ public class SmartWeatherHubHandler extends BaseBridgeHandler implements SmartWe
      */
     private synchronized void restartMessageTimeout() {
         cancelMessageTimeout();
-        messageTimeout = scheduler.schedule(() -> updateStatus(ThingStatus.OFFLINE,
-                ThingStatusDetail.COMMUNICATION_ERROR,
-                "No data received from the hub for " + MESSAGE_TIMEOUT_MINUTES + " minutes"),
+        messageTimeout = scheduler.schedule(
+                () -> updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.COMMUNICATION_ERROR,
+                        "No data received from the hub for " + MESSAGE_TIMEOUT_MINUTES + " minutes"),
                 MESSAGE_TIMEOUT_MINUTES, TimeUnit.MINUTES);
     }
 
