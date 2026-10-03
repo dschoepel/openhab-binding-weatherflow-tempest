@@ -114,9 +114,9 @@ public class SmartWeatherTempestHandler extends BaseThingHandler implements Smar
      */
     private synchronized void restartMessageTimeout() {
         cancelMessageTimeout();
-        messageTimeout = scheduler.schedule(() -> updateStatus(ThingStatus.OFFLINE,
-                ThingStatusDetail.COMMUNICATION_ERROR,
-                "No data received from the Tempest for " + MESSAGE_TIMEOUT_MINUTES + " minutes"),
+        messageTimeout = scheduler.schedule(
+                () -> updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.COMMUNICATION_ERROR,
+                        "No data received from the Tempest for " + MESSAGE_TIMEOUT_MINUTES + " minutes"),
                 MESSAGE_TIMEOUT_MINUTES, TimeUnit.MINUTES);
     }
 
@@ -165,8 +165,8 @@ public class SmartWeatherTempestHandler extends BaseThingHandler implements Smar
     private void handleEventPrecipitationStartedMessage(EventPrecipitationMessage data) {
         PrecipitationStartedData precipitationStartedData = new PrecipitationStartedData(getThing(), data);
         logger.debug("Posting precipitation started event {}", precipitationStartedData);
-        eventPublisher.post(
-                PrecipitationStartedEventFactoryImpl.createPrecipitionStartedEvent(precipitationStartedData));
+        eventPublisher
+                .post(PrecipitationStartedEventFactoryImpl.createPrecipitionStartedEvent(precipitationStartedData));
     }
 
     public void handleObservationMessage(ObservationTempestMessage data) {
@@ -260,5 +260,4 @@ public class SmartWeatherTempestHandler extends BaseThingHandler implements Smar
             }
         }
     }
-
 }

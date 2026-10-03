@@ -82,9 +82,9 @@ public class SmartWeatherHubHandler extends BaseBridgeHandler implements SmartWe
      */
     private synchronized void restartMessageTimeout() {
         cancelMessageTimeout();
-        messageTimeout = scheduler.schedule(() -> updateStatus(ThingStatus.OFFLINE,
-                ThingStatusDetail.COMMUNICATION_ERROR,
-                "No data received from the hub for " + MESSAGE_TIMEOUT_MINUTES + " minutes"),
+        messageTimeout = scheduler.schedule(
+                () -> updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.COMMUNICATION_ERROR,
+                        "No data received from the hub for " + MESSAGE_TIMEOUT_MINUTES + " minutes"),
                 MESSAGE_TIMEOUT_MINUTES, TimeUnit.MINUTES);
     }
 

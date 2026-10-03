@@ -55,7 +55,8 @@ public class SmartWeatherStationDiscoveryService extends AbstractDiscoveryServic
 
     public SmartWeatherStationDiscoveryService(SmartWeatherUDPListenerService udpListener,
             SmartWeatherHubHandler hubHandler) {
-        super(Set.of(WeatherFlowSmartWeatherBindingConstants.THING_TYPE_SMART_WEATHER_TEMPEST), SCAN_TIMEOUT_SECONDS, true);
+        super(Set.of(WeatherFlowSmartWeatherBindingConstants.THING_TYPE_SMART_WEATHER_TEMPEST), SCAN_TIMEOUT_SECONDS,
+                true);
         this.udpListener = udpListener;
         this.hubHandler = hubHandler;
     }
