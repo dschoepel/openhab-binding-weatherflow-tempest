@@ -35,6 +35,7 @@ public class CurrentConditions {
      * "feels_like": 68.9,
      * "dew_point": 50,
      * "wet_bulb_temperature": 57,
+     * "wet_bulb_globe_temperature": 63,
      * "delta_t": 10,
      * "air_density": 0.08,
      * "lightning_strike_count_last_1hr": 0,
@@ -68,6 +69,7 @@ public class CurrentConditions {
     Number feels_like;
     Number dew_point;
     Number wet_bulb_temperature;
+    Number wet_bulb_globe_temperature;
     Number delta_t;
     Number air_density;
     Number local_hour;
@@ -241,6 +243,14 @@ public class CurrentConditions {
 
     public void setWet_bulb_temperature(Number wet_bulb_temperature) {
         this.wet_bulb_temperature = wet_bulb_temperature;
+    }
+
+    public Number getWet_bulb_globe_temperature() {
+        return wet_bulb_globe_temperature;
+    }
+
+    public void setWet_bulb_globe_temperature(Number wet_bulb_globe_temperature) {
+        this.wet_bulb_globe_temperature = wet_bulb_globe_temperature;
     }
 
     public Number getDelta_t() {
