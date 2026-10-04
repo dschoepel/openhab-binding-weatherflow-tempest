@@ -29,6 +29,7 @@ import javax.measure.quantity.*;
 import org.openhab.binding.weatherflowsmartweather.SmartWeatherEventListener;
 import org.openhab.binding.weatherflowsmartweather.event.*;
 import org.openhab.binding.weatherflowsmartweather.model.*;
+import org.openhab.binding.weatherflowsmartweather.util.SensorStatus;
 import org.openhab.core.events.EventPublisher;
 import org.openhab.core.library.dimension.Intensity;
 import org.openhab.core.library.types.*;
@@ -136,7 +137,9 @@ public class SmartWeatherTempestHandler extends BaseThingHandler implements Smar
                 updateStatus(ThingStatus.ONLINE);
             }
             restartMessageTimeout();
-            // TODO update station status fields
+            if (data instanceof DeviceStatusMessage message) {
+                handleDeviceStatusMessage(message);
+            }
         } else if (data instanceof ObservationTempestMessage message) {
             handleObservationMessage(message);
         } else if (data instanceof EventRapidWindMessage message) {
@@ -148,6 +151,22 @@ public class SmartWeatherTempestHandler extends BaseThingHandler implements Smar
         } else {
             logger.debug("Ignoring message {}", data);
         }
+    }
+
+    /**
+     * Updates the station health channels from the Tempest's once-a-minute device status message.
+     */
+    private void handleDeviceStatusMessage(DeviceStatusMessage data) {
+        ThingUID uid = getThing().getUID();
+        updateState(new ChannelUID(uid, CHANNEL_RSSI), new DecimalType(data.getRssi()));
+        updateState(new ChannelUID(uid, CHANNEL_HUB_RSSI), new DecimalType(data.getHub_rssi()));
+        updateState(new ChannelUID(uid, CHANNEL_UPTIME), new DecimalType(data.getUptime()));
+        updateState(new ChannelUID(uid, CHANNEL_FIRMWARE_VERSION),
+                new StringType(String.valueOf(data.getFirmware_revision())));
+        updateState(new ChannelUID(uid, CHANNEL_SENSOR_STATUS),
+                new StringType(SensorStatus.describe(data.getSensor_status())));
+        updateState(new ChannelUID(uid, CHANNEL_LAST_REPORT),
+                new DateTimeType(Instant.ofEpochMilli(data.getTimestamp() * 1000L).atZone(UTC)));
     }
 
     private void handleEventRapidWindMessage(EventRapidWindMessage data) {

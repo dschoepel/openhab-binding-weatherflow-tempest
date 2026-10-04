@@ -3,6 +3,7 @@
 ## Unreleased
 
 - The enriched forecast now includes the wet bulb globe temperature (WBGT) from the current conditions.
+- New Tempest channels for station health: sensor status (OK or the faults it reports), Tempest and hub signal strength, uptime, firmware version and last report time. Existing Tempest Things get them automatically on upgrade.
 
 ## 5.2.0
 

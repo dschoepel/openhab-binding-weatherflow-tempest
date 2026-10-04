@@ -60,6 +60,8 @@ public class WeatherFlowSmartWeatherBindingConstants {
     public static final String CHANNEL_LOCAL_DAY_RAIN_ACCUMULATION = "local_day_rain_accumulation";
     public static final String CHANNEL_PRECIPITATION_TYPE = "precipitation_type";
     public static final String CHANNEL_WIND_SAMPLE_INTERVAL = "wind_sample_interval";
+    public static final String CHANNEL_HUB_RSSI = "hub_rssi";
+    public static final String CHANNEL_SENSOR_STATUS = "sensor_status";
 
     // List of all Forecast Channel ids
     public static final String CHANNEL_STATION_NAME = "station_name";

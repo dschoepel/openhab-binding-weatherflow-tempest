@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<update:update-descriptions xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:update="https://openhab.org/schemas/update-description/v1.0.0"
+	xsi:schemaLocation="https://openhab.org/schemas/update-description/v1.0.0 https://openhab.org/schemas/update-description-1.0.0.xsd">
+
+	<thing-type uid="weatherflowsmartweather:tempest">
+		<!-- station health channels, added to existing Tempest Things on upgrade -->
+		<instruction-set targetVersion="1">
+			<add-channel id="sensor_status">
+				<type>weatherflowsmartweather:sensorStatus</type>
+			</add-channel>
+			<add-channel id="rssi">
+				<type>weatherflowsmartweather:rssi</type>
+			</add-channel>
+			<add-channel id="hub_rssi">
+				<type>weatherflowsmartweather:hubRssi</type>
+			</add-channel>
+			<add-channel id="uptime">
+				<type>weatherflowsmartweather:uptime</type>
+			</add-channel>
+			<add-channel id="firmware_version">
+				<type>weatherflowsmartweather:version</type>
+			</add-channel>
+			<add-channel id="lastReport">
+				<type>weatherflowsmartweather:lastReport</type>
+			</add-channel>
+		</instruction-set>
+	</thing-type>
+</update:update-descriptions>

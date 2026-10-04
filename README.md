@@ -77,6 +77,12 @@ If the id or token is wrong, the Thing goes OFFLINE with a message saying which.
 | `battery_level`        | Number:ElectricPotential  | Battery voltage (advanced)               |
 | `report_interval`      | Number:Time               | Observation report interval (advanced)   |
 | `wind_sample_interval` | Number:Time               | Wind sample interval (advanced)          |
+| `sensor_status`        | String                    | `OK`, or the sensor faults reported      |
+| `rssi`                 | Number                    | Tempest signal strength at the hub (dBm) |
+| `hub_rssi`             | Number                    | Hub signal strength at the Tempest (dBm) |
+| `uptime`               | Number                    | Seconds since the Tempest started        |
+| `firmware_version`     | String                    | Tempest firmware revision                |
+| `lastReport`           | DateTime                  | Time of the last device status message   |
 
 Readings the Tempest could not measure are set to UNDEF.
 

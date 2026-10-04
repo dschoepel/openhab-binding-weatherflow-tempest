@@ -34,10 +34,17 @@
 
 			<channel id="battery_level" typeId="battery_level"/>
 
+			<channel id="sensor_status" typeId="sensorStatus"/>
+			<channel id="rssi" typeId="rssi"/>
+			<channel id="hub_rssi" typeId="hubRssi"/>
+			<channel id="uptime" typeId="uptime"/>
+			<channel id="firmware_version" typeId="version"/>
+			<channel id="lastReport" typeId="lastReport"/>
 		</channels>
 
 		<properties>
 			<property name="serial_number"></property>
+			<property name="thingTypeVersion">1</property>
 		</properties>
 		<representation-property>serial_number</representation-property>
 	</thing-type>
@@ -250,6 +257,22 @@
 		<label>Report Epoch</label>
 		<description>UTC Time of observation, in seconds since the epoch.</description>
 		<category>Time</category>
+		<state readOnly="true"/>
+	</channel-type>
+
+	<channel-type id="sensorStatus">
+		<item-type>String</item-type>
+		<label>Sensor Status</label>
+		<description>OK, or the sensor faults the Tempest reports (for example "Wind sensor failed")</description>
+		<category>Status</category>
+		<state readOnly="true"/>
+	</channel-type>
+
+	<channel-type id="hubRssi">
+		<item-type>Number</item-type>
+		<label>Hub RSSI</label>
+		<description>Signal strength of the hub as received by the Tempest (dBm)</description>
+		<category>Network</category>
 		<state readOnly="true"/>
 	</channel-type>
 
