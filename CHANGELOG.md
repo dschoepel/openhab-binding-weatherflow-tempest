@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- The enriched forecast now includes the wet bulb globe temperature (WBGT) from the current conditions.
+
 ## 5.2.0
 
 First release of this fork, for openHAB 5.2.
